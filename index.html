@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>深海垂釣：文字點擊版</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#020617">
@@ -427,6 +427,57 @@
   }
   .upgrade-btn:hover { background: #d97706; }
   .rod-maxed { border-radius: 16px; border: 1px solid rgba(245,158,11,0.3); background: rgba(245,158,11,0.1); padding: 16px; color: #fde68a; }
+
+  @media (max-width: 680px) {
+    .wrap { padding: 20px 16px 104px; }
+    h1 { font-size: 24px; }
+
+    .stats-panel {
+      position: static;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 20px 0 96px;
+    }
+    .stats-panel > .stat-card.gold { order: 1; }
+    .stats-panel > .stat-card:not(.gold) { order: 2; }
+    .stats-panel > #baitDropdownWrap { order: 3; grid-column: 1 / -1; }
+    .stats-panel > #rodDropdownWrap { order: 4; grid-column: 1 / -1; }
+    .stats-panel > button.reset-btn { order: 5; grid-column: 1 / -1; }
+
+    .dropdown-menu { width: 100%; }
+
+    .bottom-bar {
+      left: 0;
+      right: 0;
+      bottom: 0;
+      width: 100%;
+      gap: 6px;
+      padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+      background: #0f172a;
+      border-top: 1px solid #1e293b;
+      box-shadow: none;
+    }
+    .panel-wrap, #ratePanelWrap { flex: 1 1 0; }
+    .panel-btn, #rateBtn {
+      width: 100%;
+      padding: 10px 4px;
+      font-size: 11px;
+      justify-content: center;
+      gap: 4px;
+    }
+    .panel-popup, .rate-popup {
+      position: fixed;
+      left: 12px;
+      right: 12px;
+      bottom: 76px;
+      width: auto;
+      max-width: none;
+      max-height: 60vh;
+      margin-bottom: 0;
+    }
+  }
 </style>
 </head>
 <body>
