@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深海垂釣：文字點擊版</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#020617">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="深海垂釣">
+<link rel="apple-touch-icon" href="icon.svg">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: #020617;
+    color: #fff;
+    font-family: "Microsoft JhengHei", "PingFang TC", -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  .wrap {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 16px 120px;
+  }
+  h1 {
+    font-size: 32px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+  }
+  .subtitle { margin-top: 8px; color: #fff; }
+
+  .stats-panel {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 220px;
+  }
+  .stat-card, .hud-btn {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  }
+  .stat-card .label, .hud-btn .label {
+    font-size: 12px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .stat-card .value {
+    margin-top: 4px;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .stat-card.gold .value { color: #facc15; }
+  .hud-btn {
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+    color: #fff;
+    font: inherit;
+  }
+  .hud-btn:hover { background: #1e293b; }
+  .hud-btn .row {
+    margin-top: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .hud-btn .arrow { font-size: 11px; color: #cbd5e1; }
+
+  .dropdown-wrap { position: relative; }
+  .dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 8px;
+    width: 240px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    overflow: hidden;
+    z-index: 50;
+  }
+  .dropdown-item {
+    width: 100%;
+    text-align: left;
+    padding: 12px 16px;
+    border: none;
+    border-bottom: 1px solid #1e293b;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+    display: block;
+  }
+  .dropdown-item:last-child { border-bottom: none; }
+  .dropdown-item:hover:not(:disabled) { background: #1e293b; }
+  .dropdown-item.active { background: rgba(56,189,248,0.15); }
+  .dropdown-item:disabled { opacity: 0.4; cursor: not-allowed; }
+  .dropdown-item .top-row { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+  .dropdown-item .name { font-size: 14px; }
+  .dropdown-item .count { font-size: 12px; color: #cbd5e1; }
+  .dropdown-item .desc { font-size: 11px; color: #94a3b8; margin-top: 2px; white-space: pre-line; }
+  .dropdown-item .tag { font-size: 11px; flex-shrink: 0; }
+  .tag.active-tag { color: #7dd3fc; }
+  .tag.unlocked-tag { color: #cbd5e1; }
+  .tag.locked-tag { color: #64748b; }
+
+  button.reset-btn {
+    width: 100%;
+    height: 48px;
+    border-radius: 12px;
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    color: #fca5a5;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 600;
+  }
+  button.reset-btn:hover { background: #1e293b; }
+
+  .card {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    margin-top: 24px;
+  }
+  .card-header { padding: 20px 24px 0; }
+  .card-title {
+    font-size: 18px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-content { padding: 20px 24px 24px; }
+
+  @keyframes fishing-shake {
+    0% { transform: translate(0,0); }
+    25% { transform: translate(2px,-2px); }
+    50% { transform: translate(-2px,2px); }
+    75% { transform: translate(2px,2px); }
+    100% { transform: translate(0,0); }
+  }
+  .legendary-shake { animation: fishing-shake 0.3s linear infinite; }
+
+  .log-scroll {
+    height: 260px;
+    overflow-y: auto;
+    border-radius: 16px;
+    border: 1px solid #1e293b;
+    background: rgba(2,6,23,0.6);
+    padding: 12px;
+  }
+  .log-entry {
+    font-size: 14px;
+    line-height: 1.5;
+    border-radius: 12px;
+    background: rgba(15,23,42,0.7);
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    color: #fff;
+  }
+  .log-entry.legendary { color: #fdba74; border: 1px solid rgba(249,115,22,0.3); }
+  .log-entry.epic { color: #fde047; border: 1px solid rgba(234,179,8,0.3); }
+
+  .fishing-box {
+    padding: 16px;
+    border-radius: 16px;
+    background: rgba(30,41,59,0.6);
+    border: 1px solid #334155;
+  }
+  .fishing-status-btn {
+    width: 100%;
+    height: 48px;
+    border-radius: 16px;
+    background: #1e293b;
+    color: #fff;
+    border: none;
+    font: inherit;
+    font-size: 16px;
+    cursor: not-allowed;
+  }
+  .fishing-status-btn.epic { background: rgba(234,179,8,0.2); color: #fde047; }
+  .fishing-status-btn.legendary { background: rgba(249,115,22,0.2); color: #fdba74; animation: pulse 1.2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+
+  .progress-track {
+    width: 100%;
+    height: 12px;
+    background: #334155;
+    border-radius: 999px;
+    overflow: hidden;
+    margin-top: 12px;
+  }
+  .progress-fill { height: 100%; background: #38bdf8; transition: width 0.1s linear; }
+  .progress-track.epic .progress-fill { background: rgba(234,179,8,0.5); }
+  .progress-track.legendary .progress-fill { background: rgba(249,115,22,0.6); }
+
+  .info-line { font-size: 12px; margin-top: 8px; color: #fff; }
+  .info-line.muted { color: #cbd5e1; }
+
+  .action-btn {
+    width: 100%;
+    border-radius: 16px;
+    padding: 12px;
+    margin-top: 12px;
+    border: none;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    color: #fff;
+  }
+  .action-btn.auto-off { background: #334155; }
+  .action-btn.auto-off:hover { background: #475569; }
+  .action-btn.auto-on { background: #059669; }
+  .action-btn.auto-on:hover { background: #10b981; }
+  .action-btn.sell { background: #1e293b; color: #facc15; }
+  .action-btn.sell:hover { background: #334155; }
+
+  .bottom-bar {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    z-index: 40;
+  }
+  .panel-wrap { position: relative; }
+  .panel-btn {
+    width: 96px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    padding: 12px;
+    font-size: 12px;
+    color: #fff;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font: inherit;
+  }
+  .panel-btn:hover { background: #1e293b; }
+  .panel-popup {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    margin-bottom: 8px;
+    width: 360px;
+    max-width: 88vw;
+    max-height: 70vh;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 24px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .panel-popup-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid #1e293b;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .panel-popup-body { overflow-y: auto; padding: 16px; }
+  .rate-popup {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    margin-bottom: 8px;
+    width: 160px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    padding: 12px;
+    font-size: 12px;
+  }
+  .rate-row { display: flex; justify-content: space-between; padding: 2px 0; }
+
+  .tier-普通 { color: #fff; }
+  .tier-稀有 { color: #60a5fa; }
+  .tier-罕見 { color: #67e8f9; }
+  .tier-史詩 { color: #facc15; }
+  .tier-傳說 { color: #fb923c; }
+
+  .codex-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+  .codex-tab {
+    border-radius: 12px;
+    padding: 8px;
+    font-size: 14px;
+    border: 1px solid #1e293b;
+    background: #0f172a;
+    cursor: pointer;
+    font: inherit;
+    color: #fff;
+    text-align: left;
+  }
+  .codex-tab:hover { background: #1e293b; }
+  .codex-tab.active { border-color: #64748b; background: #1e293b; }
+  .codex-tab .count { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+
+  .codex-detail {
+    margin-top: 16px;
+    border-radius: 16px;
+    border: 1px solid #1e293b;
+    background: rgba(2,6,23,0.6);
+    padding: 16px;
+  }
+  .codex-detail-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .codex-reward { font-size: 12px; margin-top: 4px; color: #64748b; }
+  .codex-reward.unlocked { color: inherit; }
+  .badge {
+    background: #fff;
+    color: #0f172a;
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .codex-fish-list { margin-top: 12px; display: grid; gap: 8px; }
+  .codex-fish-item {
+    border-radius: 12px;
+    padding: 8px 12px;
+    font-size: 14px;
+    border: 1px solid #1e293b;
+    background: #0f172a;
+    color: #fff;
+  }
+  .codex-fish-item.locked { color: #64748b; background: rgba(15,23,42,0.5); }
+
+  .inv-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 16px;
+    background: rgba(2,6,23,0.6);
+    border: 1px solid #1e293b;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+  }
+  .inv-row .name { font-weight: 600; }
+  .inv-row .price { font-size: 12px; margin-top: 2px; }
+  .inv-count { background: #fff; color: #0f172a; font-size: 20px; font-weight: 700; padding: 4px 8px; border-radius: 8px; }
+  .inv-total { display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid #334155; }
+  .inv-total .amount { color: #facc15; font-weight: 600; }
+
+  .buy-mode-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .buy-mode-btn {
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    border: 1px solid #334155;
+    background: #0f172a;
+    color: #fff;
+    cursor: pointer;
+    font: inherit;
+  }
+  .buy-mode-btn.active { background: rgba(56,189,248,0.2); border-color: #38bdf8; color: #7dd3fc; }
+
+  .shop-item {
+    border-radius: 16px;
+    border: 1px solid #1e293b;
+    background: rgba(2,6,23,0.6);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .shop-item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+  .shop-item .name { font-weight: 600; }
+  .shop-item .desc { font-size: 14px; margin-top: 4px; }
+  .shop-item .owned { font-size: 12px; color: #94a3b8; margin-top: 4px; }
+  .buy-btn {
+    border-radius: 16px;
+    background: #0284c7;
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    font: inherit;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .buy-btn:hover { background: #0ea5e9; }
+  .buy-btn .price { color: #facc15; }
+
+  .rod-current, .rod-next {
+    border-radius: 16px;
+    border: 1px solid #1e293b;
+    background: rgba(2,6,23,0.6);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .rod-title { font-size: 14px; }
+  .rod-name { font-size: 18px; font-weight: 600; margin-top: 4px; }
+  .rod-desc { font-size: 14px; margin-top: 8px; white-space: pre-line; }
+  .upgrade-btn {
+    width: 100%;
+    border-radius: 16px;
+    background: #b45309;
+    color: #fff;
+    border: none;
+    padding: 12px;
+    margin-top: 12px;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .upgrade-btn:hover { background: #d97706; }
+  .rod-maxed { border-radius: 16px; border: 1px solid rgba(245,158,11,0.3); background: rgba(245,158,11,0.1); padding: 16px; color: #fde68a; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><span>🐟</span> 深海垂釣：文字點擊版</h1>
+  <p class="subtitle">購買魚餌、升級魚竿、提升釣魚效率，慢慢把傳說魚釣上來。</p>
+
+  <div class="card" id="logCard">
+    <div class="card-header"><div class="card-title">釣魚紀錄</div></div>
+    <div class="card-content"><div class="log-scroll" id="logScroll"></div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><div class="card-title"><span>✨</span> 開始釣魚</div></div>
+    <div class="card-content">
+      <div class="fishing-box">
+        <button class="fishing-status-btn" id="fishingStatusBtn" disabled></button>
+        <div class="progress-track" id="progressTrack"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+        <div class="info-line" id="baitInfoLine"></div>
+        <div class="info-line" id="timeInfoLine"></div>
+        <div class="info-line muted">史詩與傳說魚上鉤時，會額外增加拉桿時間。</div>
+        <button class="action-btn" id="autoBtn"></button>
+        <button class="action-btn sell" id="sellBtn"></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="stats-panel">
+  <div class="stat-card gold">
+    <div class="label"><span>🪙</span> 金幣</div>
+    <div class="value" id="goldValue">200</div>
+  </div>
+
+  <div class="dropdown-wrap" id="baitDropdownWrap">
+    <button class="hud-btn" id="baitDropdownBtn">
+      <div class="label"><span>🎒</span> 目前魚餌</div>
+      <div class="row"><span id="baitNameLabel"></span><span class="arrow" id="baitArrow">▼</span></div>
+    </button>
+    <div class="dropdown-menu" id="baitDropdownMenu" style="display:none;"></div>
+  </div>
+
+  <div class="dropdown-wrap" id="rodDropdownWrap">
+    <button class="hud-btn" id="rodDropdownBtn">
+      <div class="label"><span>⛏️</span> 魚竿</div>
+      <div class="row"><span id="rodNameLabel"></span><span class="arrow" id="rodArrow">▼</span></div>
+    </button>
+    <div class="dropdown-menu" id="rodDropdownMenu" style="display:none;"></div>
+  </div>
+
+  <div class="stat-card">
+    <div class="label"><span>⏱️</span> 釣魚時間</div>
+    <div class="value" id="fishingTimeValue"></div>
+  </div>
+
+  <button class="reset-btn" id="resetBtn">重置存檔</button>
+</div>
+
+<div class="bottom-bar" id="bottomBar">
+  <div class="panel-wrap" data-panel="codex">
+    <div class="panel-popup" style="display:none;">
+      <div class="panel-popup-header">圖鑑</div>
+      <div class="panel-popup-body"></div>
+    </div>
+    <button class="panel-btn"><span>圖鑑</span><span class="arrow">▼</span></button>
+  </div>
+  <div class="panel-wrap" data-panel="inventory">
+    <div class="panel-popup" style="display:none;">
+      <div class="panel-popup-header">背包</div>
+      <div class="panel-popup-body"></div>
+    </div>
+    <button class="panel-btn"><span>背包</span><span class="arrow">▼</span></button>
+  </div>
+  <div class="panel-wrap" data-panel="shop">
+    <div class="panel-popup" style="display:none;">
+      <div class="panel-popup-header">商店</div>
+      <div class="panel-popup-body"></div>
+    </div>
+    <button class="panel-btn"><span>商店</span><span class="arrow">▼</span></button>
+  </div>
+  <div class="panel-wrap" data-panel="rod">
+    <div class="panel-popup" style="display:none;">
+      <div class="panel-popup-header">魚竿</div>
+      <div class="panel-popup-body"></div>
+    </div>
+    <button class="panel-btn"><span>魚竿</span><span class="arrow">▼</span></button>
+  </div>
+  <div class="panel-wrap" id="ratePanelWrap">
+    <div class="rate-popup" style="display:none;" id="ratePopup"></div>
+    <button class="panel-btn" id="rateBtn"><span>機率</span><span class="arrow" id="rateArrow">▼</span></button>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ================= 遊戲資料（跟原版邏輯一致） ================= */
+  var FISH_TIERS = ["普通", "稀有", "罕見", "史詩", "傳說"];
+  var BASE_RATES = { 普通: 60, 稀有: 27, 罕見: 7, 史詩: 4, 傳說: 2 };
+  var FISH_VALUES = { 普通: 10, 稀有: 22, 罕見: 50, 史詩: 120, 傳說: 280 };
+  var TIER_REWARDS = {
+    普通: "能力：釣魚速度提升",
+    稀有: "能力：雙倍釣魚機率 +10%",
+    罕見: "能力：高稀有機率提升",
+    史詩: "能力：雙倍釣魚機率再提升",
+    傳說: "能力：全面強化"
+  };
+  var EMPTY_INVENTORY = { 普通: 0, 稀有: 0, 罕見: 0, 史詩: 0, 傳說: 0 };
+  var EMPTY_CODEX = { 普通: [], 稀有: [], 罕見: [], 史詩: [], 傳說: [] };
+  var EMPTY_COMPLETED = { 普通: false, 稀有: false, 罕見: false, 史詩: false, 傳說: false };
+  var DEFAULT_BAITS = { normal: 20, good: 0, advanced: 0, luxury: 0, mystic: 0 };
+  var INITIAL_LOG = ["歡迎來到深海垂釣。先買魚餌，再開始你的第一竿吧。"];
+  var BASE_TIME = 15000;
+  var EPIC_EXTRA_TIME = 2500;
+  var LEGENDARY_EXTRA_TIME = 4500;
+  var AUTO_FISH_DELAY = 600;
+
+  var BAITS = [
+    { id: "normal", name: "普通魚餌", price: 5, desc: "沒有額外加成。", mod: { 普通: 0, 稀有: 0, 罕見: 0, 史詩: 0, 傳說: 0 } },
+    { id: "good", name: "優質魚餌", price: 20, desc: "稍微提升中高等魚出現率。", mod: { 普通: -5, 稀有: 3, 罕見: 1, 史詩: 1, 傳說: 0 } },
+    { id: "advanced", name: "高級魚餌", price: 55, desc: "明顯提升罕見與史詩魚機率。", mod: { 普通: -10, 稀有: 4, 罕見: 3, 史詩: 2, 傳說: 1 } },
+    { id: "luxury", name: "豪華魚餌", price: 120, desc: "大幅強化高級魚出現率。", mod: { 普通: -15, 稀有: 5, 罕見: 4, 史詩: 4, 傳說: 2 } },
+    { id: "mystic", name: "神秘魚餌", price: 220, desc: "壓低普通魚，明顯推高史詩與傳說。", mod: { 普通: -20, 稀有: 5, 罕見: 5, 史詩: 6, 傳說: 4 } }
+  ];
+
+  var RODS = [
+    { id: "wood", name: "破舊木竿", price: 0, speedBonus: 0, desc: "一根破舊的木竿", mod: { 普通: 0, 稀有: 0, 罕見: 0, 史詩: 0, 傳說: 0 } },
+    { id: "reinforced", name: "強化木竿", price: 150, speedBonus: 0.1, desc: "提升高等級魚類的機率\n釣魚速度-10%", mod: { 普通: -2, 稀有: 1, 罕見: 1, 史詩: 0, 傳說: 0 } },
+    { id: "iron", name: "鐵製魚竿", price: 450, speedBonus: 0.2, desc: "小幅提升高等級魚類的機率\n釣魚速度-20%", mod: { 普通: -4, 稀有: 2, 罕見: 1, 史詩: 1, 傳說: 0 } },
+    { id: "pro", name: "專業魚竿", price: 1200, speedBonus: 0.3, desc: "明顯提升高等級魚類的機率\n釣魚速度-30%", mod: { 普通: -6, 稀有: 2, 罕見: 2, 史詩: 1, 傳說: 1 } },
+    { id: "deepsea", name: "深海魚竿", price: 3000, speedBonus: 0.4, desc: "大幅提升高等級魚類的機率\n釣魚速度-40%", mod: { 普通: -8, 稀有: 2, 罕見: 2, 史詩: 2, 傳說: 2 } },
+    { id: "legend", name: "傳奇魚竿", price: 7000, speedBonus: 0.5, desc: "一把傳奇魚竿\n釣魚速度-50%", mod: { 普通: -10, 稀有: 2, 罕見: 3, 史詩: 3, 傳說: 2 } }
+  ];
+
+  var FISH_NAMES = {
+    普通: ["小鯽魚", "泥鰍", "灰尾魚", "溪流小魚", "河口魚", "沙地魚", "碎鱗魚", "短尾魚", "淡水小鱸", "白肚魚"],
+    稀有: ["銀鱗魚", "青尾魚", "斑光魚", "藍背鱸", "翠紋魚", "影游魚", "晶鰭魚", "流光鯛"],
+    罕見: ["月光魚", "深藍鱸", "琥珀鰭魚", "白紋海鯛", "霧影魚", "夜鱗魚"],
+    史詩: ["黑潮巨鰭", "深海妖鱸", "赤潮王魚", "古海裂尾", "幽影巨鱸"],
+    傳說: ["黃金龍魚", "深淵古魚", "星海巨鯨", "王冠鱗神魚"]
+  };
+
+  var BUY_OPTIONS = [
+    { label: "x1", value: 1 },
+    { label: "x10", value: 10 },
+    { label: "x50", value: 50 },
+    { label: "x100", value: 100 },
+    { label: "最大", value: "max" }
+  ];
+
+  /* ================= 純邏輯函式（跟原版一致） ================= */
+  function clampRates(rates) {
+    var clamped = {};
+    FISH_TIERS.forEach(function (t) { clamped[t] = Math.max(0, rates[t]); });
+    var total = FISH_TIERS.reduce(function (s, t) { return s + clamped[t]; }, 0);
+    if (total <= 0) { var b = {}; FISH_TIERS.forEach(function (t) { b[t] = BASE_RATES[t]; }); return b; }
+    var normalized = {};
+    FISH_TIERS.forEach(function (t) { normalized[t] = (clamped[t] / total) * 100; });
+    return normalized;
+  }
+
+  function getFinalRates(bait, rod) {
+    var combined = {};
+    FISH_TIERS.forEach(function (t) { combined[t] = BASE_RATES[t] + bait.mod[t] + rod.mod[t]; });
+    return clampRates(combined);
+  }
+
+  function applyRarityBoost(rates, boost) {
+    if (boost === 0) return rates;
+    var b = Object.assign({}, rates);
+    var shift = Math.min(b["普通"], boost);
+    b["普通"] -= shift;
+    b["稀有"] += shift * 0.4;
+    b["罕見"] += shift * 0.3;
+    b["史詩"] += shift * 0.2;
+    b["傳說"] += shift * 0.1;
+    return clampRates(b);
+  }
+
+  function rollFish(rates) {
+    var n = Math.random() * 100, acc = 0;
+    for (var i = 0; i < FISH_TIERS.length; i++) {
+      acc += rates[FISH_TIERS[i]];
+      if (n <= acc) return FISH_TIERS[i];
+    }
+    return "普通";
+  }
+
+  function pickRandomName(tier) {
+    var pool = FISH_NAMES[tier];
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  function formatPercent(n) { return n.toFixed(1) + "%"; }
+
+  function getInventoryValue(inv) {
+    return FISH_TIERS.reduce(function (s, t) { return s + inv[t] * FISH_VALUES[t]; }, 0);
+  }
+
+  function getBuyQuantity(price, gold, buyMode) {
+    return buyMode === "max" ? Math.max(0, Math.floor(gold / price)) : buyMode;
+  }
+
+  function getNextAvailableBaitId(ownedBaits, currentId) {
+    var idx = BAITS.findIndex(function (b) { return b.id === currentId; });
+    var ordered = idx >= 0 ? BAITS.slice(idx + 1).concat(BAITS.slice(0, idx + 1)) : BAITS;
+    for (var i = 0; i < ordered.length; i++) {
+      if ((ownedBaits[ordered[i].id] || 0) > 0) return ordered[i].id;
+    }
+    return null;
+  }
+
+  function getLogClass(entry) {
+    if (entry.indexOf("【傳說】") >= 0 || entry.indexOf("異常強大的力量") >= 0 || entry.indexOf("全面強化") >= 0) return "legendary";
+    if (entry.indexOf("【史詩】") >= 0 || entry.indexOf("大魚上鉤") >= 0 || entry.indexOf("雙倍釣魚機率再提升") >= 0) return "epic";
+    return "";
+  }
+
+  function getHookPrompt(tier) {
+    if (tier === "史詩") return { text: "水面下傳來沉重拉扯感……像是有大魚上鉤了。", extraTime: EPIC_EXTRA_TIME };
+    if (tier === "傳說") return { text: "海面劇烈翻湧！一股異常強大的力量正在拖拽魚線……", extraTime: LEGENDARY_EXTRA_TIME };
+    return { text: "魚線微微晃動，似乎有東西咬鉤了。", extraTime: 0 };
+  }
+
+  function rollCatch(rates, doubleChance) {
+    var tier = rollFish(rates);
+    return { tier: tier, fishName: pickRandomName(tier), isDouble: Math.random() < doubleChance, prompt: getHookPrompt(tier) };
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  /* ================= 遊戲狀態 ================= */
+  var state = {
+    gold: 200,
+    selectedBaitId: "normal",
+    ownedBaits: Object.assign({}, DEFAULT_BAITS),
+    rodIndex: 0,
+    inventory: Object.assign({}, EMPTY_INVENTORY),
+    codex: JSON.parse(JSON.stringify(EMPTY_CODEX)),
+    log: INITIAL_LOG.slice(),
+    speedBonusExtra: 0,
+    doubleChance: 0,
+    rarityBoost: 0,
+    completedTiers: Object.assign({}, EMPTY_COMPLETED),
+    baitMenuOpen: false,
+    rodMenuOpen: false,
+    ratePanelOpen: false,
+    openSection: null,
+    codexTab: "普通",
+    buyMode: 1,
+    isFishing: false,
+    autoFishing: false,
+    progress: 0,
+    hookStateText: "待機中",
+    hookTier: null
+  };
+
+  var timers = { interval: null, timeout: null, autoTimeout: null };
+
+  /* ================= 自動存檔（localStorage） ================= */
+  var SAVE_KEY = "fishing-click-game-save-v1";
+
+  function saveGame() {
+    try {
+      var data = {
+        gold: state.gold,
+        selectedBaitId: state.selectedBaitId,
+        ownedBaits: state.ownedBaits,
+        rodIndex: state.rodIndex,
+        inventory: state.inventory,
+        codex: state.codex,
+        log: state.log,
+        speedBonusExtra: state.speedBonusExtra,
+        doubleChance: state.doubleChance,
+        rarityBoost: state.rarityBoost,
+        completedTiers: state.completedTiers
+      };
+      localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+    } catch (e) { /* 存檔失敗就略過，不影響遊戲繼續進行 */ }
+  }
+
+  function loadGame() {
+    try {
+      var raw = localStorage.getItem(SAVE_KEY);
+      if (!raw) return null;
+      var data = JSON.parse(raw);
+      if (!data || typeof data !== "object") return null;
+      return data;
+    } catch (e) { return null; }
+  }
+
+  function applySave(data) {
+    if (!data) return;
+    if (typeof data.gold === "number") state.gold = data.gold;
+    if (typeof data.selectedBaitId === "string") state.selectedBaitId = data.selectedBaitId;
+    if (data.ownedBaits && typeof data.ownedBaits === "object") state.ownedBaits = Object.assign({}, DEFAULT_BAITS, data.ownedBaits);
+    if (typeof data.rodIndex === "number") state.rodIndex = data.rodIndex;
+    if (data.inventory && typeof data.inventory === "object") state.inventory = Object.assign({}, EMPTY_INVENTORY, data.inventory);
+    if (data.codex && typeof data.codex === "object") state.codex = Object.assign({}, JSON.parse(JSON.stringify(EMPTY_CODEX)), data.codex);
+    if (Array.isArray(data.log) && data.log.length > 0) state.log = data.log;
+    if (typeof data.speedBonusExtra === "number") state.speedBonusExtra = data.speedBonusExtra;
+    if (typeof data.doubleChance === "number") state.doubleChance = data.doubleChance;
+    if (typeof data.rarityBoost === "number") state.rarityBoost = data.rarityBoost;
+    if (data.completedTiers && typeof data.completedTiers === "object") state.completedTiers = Object.assign({}, EMPTY_COMPLETED, data.completedTiers);
+  }
+
+  function clearSave() {
+    try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* 忽略 */ }
+  }
+
+  function addLog(text) {
+    state.log.unshift(text);
+    if (state.log.length > 40) state.log.length = 40;
+  }
+  function closeAllMenus() {
+    state.baitMenuOpen = false;
+    state.rodMenuOpen = false;
+    state.openSection = null;
+    state.ratePanelOpen = false;
+  }
+  function getBait() { return BAITS.filter(function (b) { return b.id === state.selectedBaitId; })[0] || BAITS[0]; }
+  function getRod() { return RODS[state.rodIndex]; }
+  function getNextRod() { return RODS[state.rodIndex + 1] || null; }
+  function getRates() {
+    var bait = getBait(), rod = getRod();
+    return applyRarityBoost(getFinalRates(bait, rod), state.rarityBoost);
+  }
+  function getFishingTime() {
+    var rod = getRod();
+    return Math.max(1000, Math.round(BASE_TIME * (1 - rod.speedBonus - state.speedBonusExtra)));
+  }
+
+  /* ================= 遊戲邏輯 ================= */
+  function applyCodexReward(tier) {
+    if (tier === "普通") { state.speedBonusExtra += 0.05; addLog("📘 普通圖鑑完成！釣魚速度提升"); return; }
+    if (tier === "稀有") { state.doubleChance += 0.1; addLog("📘 稀有圖鑑完成！雙倍釣魚機率 +10%"); return; }
+    if (tier === "罕見") { state.rarityBoost += 3; addLog("📘 罕見圖鑑完成！高稀有機率提升"); return; }
+    if (tier === "史詩") { state.doubleChance += 0.15; addLog("📘 史詩圖鑑完成！雙倍釣魚機率再提升"); return; }
+    state.rarityBoost += 5; state.speedBonusExtra += 0.05;
+    addLog("📘 傳說圖鑑完成！全面強化");
+  }
+
+  function finishCatch(result) {
+    var tier = result.tier, fishName = result.fishName, isDouble = result.isDouble;
+    state.isFishing = false;
+    state.hookStateText = "待機中";
+    state.hookTier = null;
+    state.inventory[tier] += isDouble ? 2 : 1;
+    if (state.codex[tier].indexOf(fishName) === -1) state.codex[tier].push(fishName);
+    if (!state.completedTiers[tier] && state.codex[tier].length === FISH_NAMES[tier].length) {
+      state.completedTiers[tier] = true;
+      applyCodexReward(tier);
+    }
+    addLog("🎣 你釣到了【" + tier + "】" + fishName + "，價值 " + FISH_VALUES[tier] + " 金幣！" + (isDouble ? "（雙倍）" : ""));
+    render();
+    maybeAutoFish();
+  }
+
+  function startFishing() {
+    if (state.isFishing) return;
+    if ((state.ownedBaits[state.selectedBaitId] || 0) <= 0) {
+      addLog("你的 " + getBait().name + " 不足，請先購買魚餌。");
+      render();
+      return;
+    }
+    var bait = getBait();
+    state.ownedBaits[state.selectedBaitId] = Math.max(0, (state.ownedBaits[state.selectedBaitId] || 0) - 1);
+    state.isFishing = true;
+    state.progress = 0;
+    state.hookStateText = "等待魚群靠近……";
+    state.hookTier = null;
+    addLog("你使用了 1 個 " + bait.name + "，開始等待魚上鉤……");
+    render();
+
+    var rates = getRates();
+    var result = rollCatch(rates, state.doubleChance);
+    var fishingTime = getFishingTime();
+    var startedAt = Date.now();
+
+    timers.interval = setInterval(function () {
+      state.progress = Math.min(100, ((Date.now() - startedAt) / fishingTime) * 100);
+      updateProgressOnly();
+    }, 50);
+
+    timers.timeout = setTimeout(function () {
+      clearInterval(timers.interval);
+      timers.interval = null;
+      state.progress = 100;
+      state.hookStateText = result.prompt.text;
+      state.hookTier = result.tier;
+      addLog(result.prompt.text);
+      render();
+      timers.timeout = setTimeout(function () { finishCatch(result); }, result.prompt.extraTime || 0);
+    }, fishingTime);
+  }
+
+  function maybeAutoFish() {
+    if (!state.autoFishing || state.isFishing) return;
+    if ((state.ownedBaits[state.selectedBaitId] || 0) <= 0) {
+      var nextId = getNextAvailableBaitId(state.ownedBaits, state.selectedBaitId);
+      if (nextId) {
+        var oldName = getBait().name;
+        state.selectedBaitId = nextId;
+        addLog("自動切換魚餌：" + oldName + " 用完，已切換為 " + BAITS.filter(function (b) { return b.id === nextId; })[0].name + "。");
+        render();
+        timers.autoTimeout = setTimeout(startFishing, AUTO_FISH_DELAY);
+        return;
+      }
+      state.autoFishing = false;
+      addLog("自動釣魚已停止：所有魚餌都用完了。");
+      render();
+      return;
+    }
+    timers.autoTimeout = setTimeout(startFishing, AUTO_FISH_DELAY);
+  }
+
+  function buyBait(baitId) {
+    var target = BAITS.filter(function (b) { return b.id === baitId; })[0];
+    if (!target) return;
+    var qty = getBuyQuantity(target.price, state.gold, state.buyMode);
+    var totalCost = target.price * qty;
+    if (state.gold < totalCost || qty <= 0) {
+      addLog("金幣不足，無法購買 " + target.name + "。");
+      render();
+      return;
+    }
+    state.gold -= totalCost;
+    state.ownedBaits[baitId] = (state.ownedBaits[baitId] || 0) + qty;
+    addLog("你購買了 " + qty + " 個 " + target.name + "。");
+    render();
+  }
+
+  function upgradeRod() {
+    var nextRod = getNextRod();
+    if (!nextRod) { addLog("你的魚竿已經升到最高級。"); render(); return; }
+    if (state.gold < nextRod.price) { addLog("金幣不足，升級到 " + nextRod.name + " 需要 " + nextRod.price + " 金幣。"); render(); return; }
+    state.gold -= nextRod.price;
+    state.rodIndex += 1;
+    addLog("魚竿升級成功，你現在使用的是 " + nextRod.name + "。");
+    render();
+  }
+
+  function sellAllFish() {
+    var total = FISH_TIERS.reduce(function (s, t) { return s + state.inventory[t]; }, 0);
+    if (total === 0) { addLog("背包裡沒有魚可以賣。"); render(); return; }
+    var value = getInventoryValue(state.inventory);
+    state.gold += value;
+    state.inventory = Object.assign({}, EMPTY_INVENTORY);
+    addLog("你賣出了 " + total + " 條魚，獲得 " + value + " 金幣。");
+    render();
+  }
+
+  function resetGame() {
+    if (timers.interval) clearInterval(timers.interval);
+    if (timers.timeout) clearTimeout(timers.timeout);
+    if (timers.autoTimeout) clearTimeout(timers.autoTimeout);
+    state.gold = 200;
+    state.selectedBaitId = "normal";
+    state.ownedBaits = Object.assign({}, DEFAULT_BAITS);
+    state.rodIndex = 0;
+    state.inventory = Object.assign({}, EMPTY_INVENTORY);
+    state.codex = JSON.parse(JSON.stringify(EMPTY_CODEX));
+    state.log = INITIAL_LOG.slice();
+    state.speedBonusExtra = 0;
+    state.doubleChance = 0;
+    state.rarityBoost = 0;
+    state.completedTiers = Object.assign({}, EMPTY_COMPLETED);
+    state.buyMode = 1;
+    state.isFishing = false;
+    state.autoFishing = false;
+    state.progress = 0;
+    state.hookStateText = "待機中";
+    state.hookTier = null;
+    state.codexTab = "普通";
+    closeAllMenus();
+    clearSave();
+    render();
+  }
+
+  function toggleAutoFishing() {
+    state.autoFishing = !state.autoFishing;
+    render();
+    if (state.autoFishing) maybeAutoFish();
+  }
+
+  /* ================= 畫面渲染 ================= */
+  function updateProgressOnly() {
+    var fill = document.getElementById("progressFill");
+    if (fill) fill.style.width = state.progress + "%";
+  }
+
+  function tierClass(tier) { return "tier-" + tier; }
+
+  function renderLog() {
+    var el = document.getElementById("logScroll");
+    el.innerHTML = state.log.map(function (entry, i) {
+      var cls = getLogClass(entry);
+      return '<div class="log-entry ' + cls + '">' + escapeHtml(entry) + "</div>";
+    }).join("");
+    var logCard = document.getElementById("logCard");
+    logCard.className = "card" + (state.hookTier === "傳說" ? " legendary-shake" : "");
+  }
+
+  function renderStats() {
+    document.getElementById("goldValue").textContent = state.gold;
+    var bait = getBait(), rod = getRod();
+    document.getElementById("baitNameLabel").textContent = bait.name;
+    document.getElementById("baitArrow").textContent = state.baitMenuOpen ? "▲" : "▼";
+    document.getElementById("rodNameLabel").textContent = rod.name;
+    document.getElementById("rodArrow").textContent = state.rodMenuOpen ? "▲" : "▼";
+    document.getElementById("fishingTimeValue").textContent = (getFishingTime() / 1000).toFixed(1) + " 秒";
+  }
+
+  function renderBaitDropdown() {
+    var menu = document.getElementById("baitDropdownMenu");
+    if (!state.baitMenuOpen) { menu.style.display = "none"; return; }
+    menu.style.display = "block";
+    menu.innerHTML = BAITS.map(function (item) {
+      var count = state.ownedBaits[item.id] || 0;
+      var disabled = count <= 0;
+      var active = state.selectedBaitId === item.id;
+      return '<button class="dropdown-item' + (active ? " active" : "") + '" data-action="select-bait" data-id="' + item.id + '"' + (disabled ? " disabled" : "") + '>' +
+        '<div class="top-row"><span class="name">' + escapeHtml(item.name) + '</span><span class="count">x' + count + '</span></div></button>';
+    }).join("");
+  }
+
+  function renderRodDropdown() {
+    var menu = document.getElementById("rodDropdownMenu");
+    if (!state.rodMenuOpen) { menu.style.display = "none"; return; }
+    menu.style.display = "block";
+    menu.innerHTML = RODS.map(function (item, index) {
+      var unlocked = index <= state.rodIndex;
+      var active = index === state.rodIndex;
+      var tagClass = active ? "active-tag" : (unlocked ? "unlocked-tag" : "locked-tag");
+      var tagText = active ? "使用中" : (unlocked ? "已獲得" : "未獲得");
+      return '<button class="dropdown-item' + (active ? " active" : "") + '" data-action="select-rod" data-id="' + index + '"' + (!unlocked ? " disabled" : "") + '>' +
+        '<div class="top-row"><div><div class="name">' + escapeHtml(item.name) + '</div><div class="desc">' + escapeHtml(item.desc) + '</div></div>' +
+        '<span class="tag ' + tagClass + '">' + tagText + '</span></div></button>';
+    }).join("");
+  }
+
+  function renderFishingCard() {
+    var bait = getBait();
+    var btn = document.getElementById("fishingStatusBtn");
+    var label = state.isFishing ? (state.hookStateText + "（" + bait.name + "）") : (state.autoFishing ? "自動釣魚中（" + bait.name + "）" : "待機中（" + bait.name + "）");
+    btn.textContent = label;
+    btn.className = "fishing-status-btn" + (state.hookTier === "史詩" ? " epic" : "") + (state.hookTier === "傳說" ? " legendary" : "");
+
+    var track = document.getElementById("progressTrack");
+    track.className = "progress-track" + (state.hookTier === "史詩" ? " epic" : "") + (state.hookTier === "傳說" ? " legendary" : "");
+    document.getElementById("progressFill").style.width = state.progress + "%";
+
+    document.getElementById("baitInfoLine").textContent = "目前使用：" + bait.name + "／剩餘 " + (state.ownedBaits[state.selectedBaitId] || 0) + " 個";
+    document.getElementById("timeInfoLine").textContent = "釣魚所需時間：" + (getFishingTime() / 1000).toFixed(1) + " 秒";
+
+    var autoBtn = document.getElementById("autoBtn");
+    autoBtn.textContent = state.autoFishing ? "停止釣魚" : "開始釣魚（自動）";
+    autoBtn.className = "action-btn " + (state.autoFishing ? "auto-on" : "auto-off");
+
+    var inventoryValue = getInventoryValue(state.inventory);
+    document.getElementById("sellBtn").textContent = "賣出全部魚（" + inventoryValue + " 金幣）";
+  }
+
+  function renderCodexPanel(container) {
+    var html = '<div class="codex-grid">';
+    FISH_TIERS.forEach(function (tier) {
+      var active = state.codexTab === tier;
+      html += '<button class="codex-tab' + (active ? " active" : "") + '" data-action="codex-tab" data-id="' + tier + '">' +
+        '<div class="' + tierClass(tier) + '">' + tier + '</div>' +
+        '<div class="count">' + state.codex[tier].length + '/' + FISH_NAMES[tier].length + '</div></button>';
+    });
+    html += '</div>';
+
+    var tab = state.codexTab;
+    var unlocked = state.completedTiers[tab];
+    html += '<div class="codex-detail"><div class="codex-detail-top">' +
+      '<div><div class="' + tierClass(tab) + '" style="font-weight:600;">' + tab + '</div>' +
+      '<div class="codex-reward' + (unlocked ? " unlocked " + tierClass(tab) : "") + '">' + TIER_REWARDS[tab] + '</div></div>' +
+      '<span class="badge">' + state.codex[tab].length + '/' + FISH_NAMES[tab].length + '</span></div>';
+    html += '<div class="codex-fish-list">';
+    FISH_NAMES[tab].forEach(function (fishName) {
+      var got = state.codex[tab].indexOf(fishName) !== -1;
+      html += '<div class="codex-fish-item' + (got ? "" : " locked") + '">' + (got ? escapeHtml(fishName) : "？？？") + '</div>';
+    });
+    html += '</div></div>';
+    container.innerHTML = html;
+  }
+
+  function renderInventoryPanel(container) {
+    var value = getInventoryValue(state.inventory);
+    var html = "";
+    FISH_TIERS.forEach(function (tier) {
+      html += '<div class="inv-row"><div><div class="name ' + tierClass(tier) + '">' + tier + '</div>' +
+        '<div class="price">單價 ' + FISH_VALUES[tier] + ' 金幣</div></div>' +
+        '<div class="inv-count">' + state.inventory[tier] + '</div></div>';
+    });
+    html += '<div class="inv-total"><span>背包總價值</span><span class="amount">' + value + '</span></div>';
+    container.innerHTML = html;
+  }
+
+  function renderShopPanel(container) {
+    var html = '<div class="buy-mode-row">';
+    BUY_OPTIONS.forEach(function (opt) {
+      var active = state.buyMode === opt.value;
+      html += '<button class="buy-mode-btn' + (active ? " active" : "") + '" data-action="buy-mode" data-id="' + opt.value + '">' + opt.label + '</button>';
+    });
+    html += '</div>';
+    BAITS.forEach(function (item) {
+      var qty = getBuyQuantity(item.price, state.gold, state.buyMode);
+      html += '<div class="shop-item"><div class="shop-item-top"><div>' +
+        '<div class="name">' + escapeHtml(item.name) + '</div>' +
+        '<div class="desc">' + escapeHtml(item.desc) + '</div>' +
+        '<div class="owned">持有：' + (state.ownedBaits[item.id] || 0) + '</div></div>' +
+        '<button class="buy-btn" data-action="buy-bait" data-id="' + item.id + '">購買 (<span class="price">' + (item.price * qty) + ' 金幣</span>)</button>' +
+        '</div></div>';
+    });
+    container.innerHTML = html;
+  }
+
+  function renderRodPanel(container) {
+    var rod = getRod(), nextRod = getNextRod();
+    var html = '<div class="rod-current"><div class="rod-title">目前魚竿</div>' +
+      '<div class="rod-name">' + escapeHtml(rod.name) + '</div>' +
+      '<div class="rod-desc">' + escapeHtml(rod.desc) + '</div></div>';
+    if (nextRod) {
+      html += '<div class="rod-next"><div class="rod-title">下一階段</div>' +
+        '<div class="rod-name">' + escapeHtml(nextRod.name) + '</div>' +
+        '<div class="rod-desc">' + escapeHtml(nextRod.desc) + '</div>' +
+        '<button class="upgrade-btn" data-action="upgrade-rod">升級魚竿（' + nextRod.price + ' 金幣）</button></div>';
+    } else {
+      html += '<div class="rod-maxed">你的魚竿已經是最高級了。</div>';
+    }
+    container.innerHTML = html;
+  }
+
+  function renderBottomBar() {
+    var wraps = document.querySelectorAll(".panel-wrap[data-panel]");
+    wraps.forEach(function (wrap) {
+      var key = wrap.getAttribute("data-panel");
+      var popup = wrap.querySelector(".panel-popup");
+      var arrow = wrap.querySelector(".arrow");
+      var open = state.openSection === key;
+      popup.style.display = open ? "flex" : "none";
+      arrow.textContent = open ? "▲" : "▼";
+      if (open) {
+        var body = popup.querySelector(".panel-popup-body");
+        if (key === "codex") renderCodexPanel(body);
+        else if (key === "inventory") renderInventoryPanel(body);
+        else if (key === "shop") renderShopPanel(body);
+        else if (key === "rod") renderRodPanel(body);
+      }
+    });
+
+    var ratePopup = document.getElementById("ratePopup");
+    var rateArrow = document.getElementById("rateArrow");
+    if (state.ratePanelOpen) {
+      ratePopup.style.display = "block";
+      rateArrow.textContent = "▲";
+      var rates = getRates();
+      ratePopup.innerHTML = FISH_TIERS.map(function (tier) {
+        return '<div class="rate-row"><span class="' + tierClass(tier) + '">' + tier + '</span><span>' + formatPercent(rates[tier]) + '</span></div>';
+      }).join("");
+    } else {
+      ratePopup.style.display = "none";
+      rateArrow.textContent = "▼";
+    }
+  }
+
+  function render() {
+    renderStats();
+    renderBaitDropdown();
+    renderRodDropdown();
+    renderLog();
+    renderFishingCard();
+    renderBottomBar();
+    saveGame();
+  }
+
+  /* ================= 事件委派 ================= */
+  document.addEventListener("click", function (e) {
+    var actionEl = e.target.closest ? e.target.closest("[data-action]") : null;
+
+    // 下拉選單開關
+    var baitBtn = document.getElementById("baitDropdownBtn");
+    var rodBtn = document.getElementById("rodDropdownBtn");
+    var rateBtn = document.getElementById("rateBtn");
+
+    if (baitBtn && baitBtn.contains(e.target)) {
+      state.baitMenuOpen = !state.baitMenuOpen;
+      state.rodMenuOpen = false; state.ratePanelOpen = false; state.openSection = null;
+      render(); renderBottomBar();
+      return;
+    }
+    if (rodBtn && rodBtn.contains(e.target)) {
+      state.rodMenuOpen = !state.rodMenuOpen;
+      state.baitMenuOpen = false; state.ratePanelOpen = false; state.openSection = null;
+      render(); renderBottomBar();
+      return;
+    }
+    if (rateBtn && rateBtn.contains(e.target)) {
+      state.ratePanelOpen = !state.ratePanelOpen;
+      state.baitMenuOpen = false; state.rodMenuOpen = false; state.openSection = null;
+      render(); renderBottomBar();
+      return;
+    }
+
+    var panelBtn = e.target.closest ? e.target.closest(".panel-wrap[data-panel] > .panel-btn") : null;
+    if (panelBtn) {
+      var key = panelBtn.parentElement.getAttribute("data-panel");
+      state.openSection = state.openSection === key ? null : key;
+      state.baitMenuOpen = false; state.rodMenuOpen = false; state.ratePanelOpen = false;
+      render(); renderBottomBar();
+      return;
+    }
+
+    if (actionEl) {
+      var action = actionEl.getAttribute("data-action");
+      var id = actionEl.getAttribute("data-id");
+      if (action === "select-bait") { state.selectedBaitId = id; state.baitMenuOpen = false; render(); return; }
+      if (action === "select-rod") { var idx = parseInt(id, 10); if (idx <= state.rodIndex) { state.rodIndex = idx; state.rodMenuOpen = false; render(); } return; }
+      if (action === "codex-tab") { state.codexTab = id; renderBottomBar(); return; }
+      if (action === "buy-mode") { state.buyMode = id === "max" ? "max" : parseInt(id, 10); renderBottomBar(); return; }
+      if (action === "buy-bait") { buyBait(id); renderBottomBar(); return; }
+      if (action === "upgrade-rod") { upgradeRod(); renderBottomBar(); return; }
+      return;
+    }
+
+    // 點擊外部關閉選單
+    var clickedInsideDropdown = e.target.closest && (e.target.closest("#baitDropdownWrap") || e.target.closest("#rodDropdownWrap") || e.target.closest("#ratePanelWrap") || e.target.closest(".panel-wrap[data-panel]"));
+    if (!clickedInsideDropdown) {
+      if (state.baitMenuOpen || state.rodMenuOpen || state.ratePanelOpen || state.openSection) {
+        closeAllMenus();
+        render(); renderBottomBar();
+      }
+    }
+  });
+
+  document.getElementById("resetBtn").addEventListener("click", resetGame);
+  document.getElementById("autoBtn").addEventListener("click", toggleAutoFishing);
+  document.getElementById("sellBtn").addEventListener("click", sellAllFish);
+  document.getElementById("fishingStatusBtn").parentElement.addEventListener("click", function () {});
+
+  applySave(loadGame());
+  render();
+})();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js").catch(function () { /* 略過錯誤 */ });
+  });
+}
+</script>
+</body>
+</html>
