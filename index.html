@@ -601,8 +601,8 @@
 
   /* ================= 遊戲資料（跟原版邏輯一致） ================= */
   var FISH_TIERS = ["普通", "稀有", "罕見", "史詩", "傳說"];
-  var BASE_RATES = { 普通: 52, 稀有: 29, 罕見: 10, 史詩: 5.5, 傳說: 3.5 };
-  var FISH_VALUES = { 普通: 10, 稀有: 22, 罕見: 50, 史詩: 120, 傳說: 280 };
+  var BASE_RATES = { 普通: 55, 稀有: 27, 罕見: 11, 史詩: 5, 傳說: 2 };
+  var FISH_VALUES = { 普通: 10, 稀有: 25, 罕見: 60, 史詩: 150, 傳說: 400 };
   var TIER_REWARDS = {
     普通: "能力：釣魚速度提升",
     稀有: "能力：雙倍釣魚機率 +10%",
@@ -622,19 +622,19 @@
 
   var BAITS = [
     { id: "normal", name: "普通魚餌", price: 5, desc: "沒有額外加成。", mod: { 普通: 0, 稀有: 0, 罕見: 0, 史詩: 0, 傳說: 0 } },
-    { id: "good", name: "優質魚餌", price: 20, desc: "稍微提升中高等魚出現率。", mod: { 普通: -5, 稀有: 3, 罕見: 1, 史詩: 1, 傳說: 0 } },
-    { id: "advanced", name: "高級魚餌", price: 55, desc: "明顯提升罕見與史詩魚機率。", mod: { 普通: -10, 稀有: 4, 罕見: 3, 史詩: 2, 傳說: 1 } },
-    { id: "luxury", name: "豪華魚餌", price: 120, desc: "大幅強化高級魚出現率。", mod: { 普通: -15, 稀有: 5, 罕見: 4, 史詩: 4, 傳說: 2 } },
-    { id: "mystic", name: "神秘魚餌", price: 220, desc: "壓低普通魚，明顯推高史詩與傳說。", mod: { 普通: -20, 稀有: 5, 罕見: 5, 史詩: 6, 傳說: 4 } }
+    { id: "good", name: "優質魚餌", price: 10, desc: "稍微提升中高等魚出現率。", mod: { 普通: -6, 稀有: 2, 罕見: 2, 史詩: 1, 傳說: 1 } },
+    { id: "advanced", name: "高級魚餌", price: 15, desc: "明顯提升罕見與史詩魚機率。", mod: { 普通: -12, 稀有: 4, 罕見: 4, 史詩: 2, 傳說: 2 } },
+    { id: "luxury", name: "豪華魚餌", price: 20, desc: "大幅強化高級魚出現率。", mod: { 普通: -20, 稀有: 7, 罕見: 6, 史詩: 4, 傳說: 3 } },
+    { id: "mystic", name: "神秘魚餌", price: 35, desc: "壓低普通魚，明顯推高史詩與傳說。", mod: { 普通: -28, 稀有: 8, 罕見: 7, 史詩: 6, 傳說: 7 } }
   ];
 
   var RODS = [
     { id: "wood", name: "破舊木竿", price: 0, speedBonus: 0, desc: "一根破舊的木竿", mod: { 普通: 0, 稀有: 0, 罕見: 0, 史詩: 0, 傳說: 0 } },
-    { id: "reinforced", name: "強化木竿", price: 600, speedBonus: 0.1, desc: "提升高等級魚類的機率\n釣魚速度-10%", mod: { 普通: -2, 稀有: 1, 罕見: 1, 史詩: 0, 傳說: 0 } },
-    { id: "iron", name: "鐵製魚竿", price: 1800, speedBonus: 0.2, desc: "小幅提升高等級魚類的機率\n釣魚速度-20%", mod: { 普通: -4, 稀有: 2, 罕見: 1, 史詩: 1, 傳說: 0 } },
-    { id: "pro", name: "專業魚竿", price: 4800, speedBonus: 0.3, desc: "明顯提升高等級魚類的機率\n釣魚速度-30%\n5% 機率一次釣到 2 條魚", mod: { 普通: -6, 稀有: 2, 罕見: 2, 史詩: 1, 傳說: 1 }, multiCatch: { chance: 0.05, count: 2 } },
-    { id: "deepsea", name: "深海魚竿", price: 12000, speedBonus: 0.4, desc: "大幅提升高等級魚類的機率\n釣魚速度-40%", mod: { 普通: -8, 稀有: 2, 罕見: 2, 史詩: 2, 傳說: 2 } },
-    { id: "legend", name: "傳奇魚竿", price: 28000, speedBonus: 0.5, desc: "一把傳奇魚竿\n釣魚速度-50%\n5% 機率一次釣到 3 條魚", mod: { 普通: -10, 稀有: 2, 罕見: 3, 史詩: 3, 傳說: 2 }, multiCatch: { chance: 0.05, count: 3 } }
+    { id: "reinforced", name: "強化木竿", price: 1200, speedBonus: 0.1, desc: "提升高等級魚類的機率\n釣魚速度-10%", mod: { 普通: -2, 稀有: 1, 罕見: 1, 史詩: 0, 傳說: 0 } },
+    { id: "iron", name: "鐵製魚竿", price: 3600, speedBonus: 0.2, desc: "小幅提升高等級魚類的機率\n釣魚速度-20%", mod: { 普通: -4, 稀有: 2, 罕見: 1, 史詩: 1, 傳說: 0 } },
+    { id: "pro", name: "專業魚竿", price: 9600, speedBonus: 0.3, desc: "明顯提升高等級魚類的機率\n釣魚速度-30%\n5% 機率一次釣到 2 條魚", mod: { 普通: -6, 稀有: 2, 罕見: 2, 史詩: 1, 傳說: 1 }, multiCatch: { chance: 0.05, count: 2 } },
+    { id: "deepsea", name: "深海魚竿", price: 24000, speedBonus: 0.4, desc: "大幅提升高等級魚類的機率\n釣魚速度-40%", mod: { 普通: -8, 稀有: 2, 罕見: 2, 史詩: 2, 傳說: 2 } },
+    { id: "legend", name: "傳奇魚竿", price: 56000, speedBonus: 0.5, desc: "一把傳奇魚竿\n釣魚速度-50%\n5% 機率一次釣到 3 條魚", mod: { 普通: -10, 稀有: 2, 罕見: 3, 史詩: 3, 傳說: 2 }, multiCatch: { chance: 0.05, count: 3 } }
   ];
 
   var FISH_NAMES = {
