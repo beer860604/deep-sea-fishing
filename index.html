@@ -632,9 +632,9 @@
     { id: "wood", name: "破舊木竿", price: 0, speedBonus: 0, desc: "一根破舊的木竿", mod: { 普通: 0, 稀有: 0, 罕見: 0, 史詩: 0, 傳說: 0 } },
     { id: "reinforced", name: "強化木竿", price: 600, speedBonus: 0.1, desc: "提升高等級魚類的機率\n釣魚速度-10%", mod: { 普通: -2, 稀有: 1, 罕見: 1, 史詩: 0, 傳說: 0 } },
     { id: "iron", name: "鐵製魚竿", price: 1800, speedBonus: 0.2, desc: "小幅提升高等級魚類的機率\n釣魚速度-20%", mod: { 普通: -4, 稀有: 2, 罕見: 1, 史詩: 1, 傳說: 0 } },
-    { id: "pro", name: "專業魚竿", price: 4800, speedBonus: 0.3, desc: "明顯提升高等級魚類的機率\n釣魚速度-30%", mod: { 普通: -6, 稀有: 2, 罕見: 2, 史詩: 1, 傳說: 1 } },
+    { id: "pro", name: "專業魚竿", price: 4800, speedBonus: 0.3, desc: "明顯提升高等級魚類的機率\n釣魚速度-30%\n5% 機率一次釣到 2 條魚（各自獨立骰）", mod: { 普通: -6, 稀有: 2, 罕見: 2, 史詩: 1, 傳說: 1 }, multiCatch: { chance: 0.05, count: 2 } },
     { id: "deepsea", name: "深海魚竿", price: 12000, speedBonus: 0.4, desc: "大幅提升高等級魚類的機率\n釣魚速度-40%", mod: { 普通: -8, 稀有: 2, 罕見: 2, 史詩: 2, 傳說: 2 } },
-    { id: "legend", name: "傳奇魚竿", price: 28000, speedBonus: 0.5, desc: "一把傳奇魚竿\n釣魚速度-50%", mod: { 普通: -10, 稀有: 2, 罕見: 3, 史詩: 3, 傳說: 2 } }
+    { id: "legend", name: "傳奇魚竿", price: 28000, speedBonus: 0.5, desc: "一把傳奇魚竿\n釣魚速度-50%\n5% 機率一次釣到 3 條魚（各自獨立骰）", mod: { 普通: -10, 稀有: 2, 罕見: 3, 史詩: 3, 傳說: 2 }, multiCatch: { chance: 0.05, count: 3 } }
   ];
 
   var FISH_NAMES = {
@@ -730,6 +730,26 @@
   function rollCatch(rates, doubleChance) {
     var tier = rollFish(rates);
     return { tier: tier, fishName: pickRandomName(tier), isDouble: Math.random() < doubleChance, prompt: getHookPrompt(tier) };
+  }
+
+  function rollMultiCatch(rates, doubleChance, rod) {
+    var count = 1;
+    if (rod.multiCatch && Math.random() < rod.multiCatch.chance) {
+      count = rod.multiCatch.count;
+    }
+    var results = [];
+    for (var i = 0; i < count; i++) {
+      results.push(rollCatch(rates, doubleChance));
+    }
+    return results;
+  }
+
+  function pickTopResult(results) {
+    var top = results[0];
+    results.forEach(function (r) {
+      if (FISH_TIERS.indexOf(r.tier) > FISH_TIERS.indexOf(top.tier)) top = r;
+    });
+    return top;
   }
 
   function escapeHtml(s) {
@@ -847,18 +867,28 @@
     addLog("📘 傳說圖鑑完成！全面強化");
   }
 
-  function finishCatch(result) {
-    var tier = result.tier, fishName = result.fishName, isDouble = result.isDouble;
+  function finishCatch(results) {
     state.isFishing = false;
     state.hookStateText = "待機中";
     state.hookTier = null;
-    state.inventory[tier] += isDouble ? 2 : 1;
-    if (state.codex[tier].indexOf(fishName) === -1) state.codex[tier].push(fishName);
-    if (!state.completedTiers[tier] && state.codex[tier].length === FISH_NAMES[tier].length) {
-      state.completedTiers[tier] = true;
-      applyCodexReward(tier);
+    var totalValue = 0;
+    var parts = [];
+    results.forEach(function (result) {
+      var tier = result.tier, fishName = result.fishName, isDouble = result.isDouble;
+      state.inventory[tier] += isDouble ? 2 : 1;
+      if (state.codex[tier].indexOf(fishName) === -1) state.codex[tier].push(fishName);
+      if (!state.completedTiers[tier] && state.codex[tier].length === FISH_NAMES[tier].length) {
+        state.completedTiers[tier] = true;
+        applyCodexReward(tier);
+      }
+      totalValue += FISH_VALUES[tier] * (isDouble ? 2 : 1);
+      parts.push("【" + tier + "】" + fishName + (isDouble ? "（雙倍）" : ""));
+    });
+    if (results.length > 1) {
+      addLog("🎣✨ 魚竿發威，一次釣到 " + results.length + " 條魚：" + parts.join("、") + "，共價值 " + totalValue + " 金幣！");
+    } else {
+      addLog("🎣 你釣到了 " + parts[0] + "，價值 " + totalValue + " 金幣！");
     }
-    addLog("🎣 你釣到了【" + tier + "】" + fishName + "，價值 " + FISH_VALUES[tier] + " 金幣！" + (isDouble ? "（雙倍）" : ""));
     render();
     maybeAutoFish();
   }
@@ -880,7 +910,9 @@
     render();
 
     var rates = getRates();
-    var result = rollCatch(rates, state.doubleChance);
+    var rod = getRod();
+    var results = rollMultiCatch(rates, state.doubleChance, rod);
+    var top = pickTopResult(results);
     var fishingTime = getFishingTime();
     var startedAt = Date.now();
 
@@ -893,11 +925,11 @@
       clearInterval(timers.interval);
       timers.interval = null;
       state.progress = 100;
-      state.hookStateText = result.prompt.text;
-      state.hookTier = result.tier;
-      addLog(result.prompt.text);
+      state.hookStateText = top.prompt.text;
+      state.hookTier = top.tier;
+      addLog(top.prompt.text);
       render();
-      timers.timeout = setTimeout(function () { finishCatch(result); }, result.prompt.extraTime || 0);
+      timers.timeout = setTimeout(function () { finishCatch(results); }, top.prompt.extraTime || 0);
     }, fishingTime);
   }
 
