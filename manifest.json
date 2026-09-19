@@ -4,6 +4,7 @@
   "description": "購買魚餌、升級魚竿，慢慢把傳說魚釣上來的文字點擊遊戲",
   "start_url": "./index.html",
   "scope": "./",
+  "display_override": ["window-controls-overlay", "standalone"],
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#020617",
