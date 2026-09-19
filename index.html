@@ -1195,19 +1195,19 @@
     if (baitBtn && baitBtn.contains(e.target)) {
       state.baitMenuOpen = !state.baitMenuOpen;
       state.rodMenuOpen = false; state.ratePanelOpen = false; state.openSection = null;
-      render(); renderBottomBar();
+      render();
       return;
     }
     if (rodBtn && rodBtn.contains(e.target)) {
       state.rodMenuOpen = !state.rodMenuOpen;
       state.baitMenuOpen = false; state.ratePanelOpen = false; state.openSection = null;
-      render(); renderBottomBar();
+      render();
       return;
     }
     if (rateBtn && rateBtn.contains(e.target)) {
       state.ratePanelOpen = !state.ratePanelOpen;
       state.baitMenuOpen = false; state.rodMenuOpen = false; state.openSection = null;
-      render(); renderBottomBar();
+      render();
       return;
     }
 
@@ -1216,7 +1216,7 @@
       var key = panelBtn.parentElement.getAttribute("data-panel");
       state.openSection = state.openSection === key ? null : key;
       state.baitMenuOpen = false; state.rodMenuOpen = false; state.ratePanelOpen = false;
-      render(); renderBottomBar();
+      render();
       return;
     }
 
@@ -1227,8 +1227,8 @@
       if (action === "select-rod") { var idx = parseInt(id, 10); if (idx <= state.rodIndex) { state.rodIndex = idx; state.rodMenuOpen = false; render(); } return; }
       if (action === "codex-tab") { state.codexTab = id; renderBottomBar(); return; }
       if (action === "buy-mode") { state.buyMode = id === "max" ? "max" : parseInt(id, 10); renderBottomBar(); return; }
-      if (action === "buy-bait") { buyBait(id); renderBottomBar(); return; }
-      if (action === "upgrade-rod") { upgradeRod(); renderBottomBar(); return; }
+      if (action === "buy-bait") { buyBait(id); return; }
+      if (action === "upgrade-rod") { upgradeRod(); return; }
       return;
     }
 
@@ -1237,7 +1237,7 @@
     if (!clickedInsideDropdown) {
       if (state.baitMenuOpen || state.rodMenuOpen || state.ratePanelOpen || state.openSection) {
         closeAllMenus();
-        render(); renderBottomBar();
+        render();
       }
     }
   });
@@ -1245,7 +1245,6 @@
   document.getElementById("resetBtn").addEventListener("click", resetGame);
   document.getElementById("autoBtn").addEventListener("click", toggleAutoFishing);
   document.getElementById("sellBtn").addEventListener("click", sellAllFish);
-  document.getElementById("fishingStatusBtn").parentElement.addEventListener("click", function () {});
 
   applySave(loadGame());
   render();
