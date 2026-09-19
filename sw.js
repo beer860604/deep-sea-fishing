@@ -1,9 +1,8 @@
-var CACHE_NAME = "fishing-game-cache-v6";
+var CACHE_NAME = "fishing-game-cache-v7";
 var FILES_TO_CACHE = [
   "./",
   "./index.html",
   "./manifest.json",
-  "./icon.svg",
   "./icon-192.png",
   "./icon-512.png"
 ];
