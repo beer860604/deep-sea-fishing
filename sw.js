@@ -1,9 +1,11 @@
-var CACHE_NAME = "fishing-game-cache-v5";
+var CACHE_NAME = "fishing-game-cache-v6";
 var FILES_TO_CACHE = [
   "./",
   "./index.html",
   "./manifest.json",
-  "./icon.svg"
+  "./icon.svg",
+  "./icon-192.png",
+  "./icon-512.png"
 ];
 
 self.addEventListener("install", function (event) {
