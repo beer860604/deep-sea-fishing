@@ -1,4 +1,4 @@
-var CACHE_NAME = "fishing-game-cache-v4";
+var CACHE_NAME = "fishing-game-cache-v5";
 var FILES_TO_CACHE = [
   "./",
   "./index.html",
